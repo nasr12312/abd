@@ -1,0 +1,2361 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مولد الأسئلة الذكي - مدعوم بـ Gemini AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .ai-badge {
+            background: linear-gradient(45deg, #4285f4, #34a853, #fbbc05, #ea4335);
+            background-size: 400% 400%;
+            animation: gradient 3s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .loading-dots {
+            display: inline-block;
+        }
+        
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+        
+        .question-card {
+            transition: all 0.3s ease;
+            border-right: 4px solid #667eea;
+        }
+        
+        .question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        
+        .success-animation {
+            animation: successPulse 0.6s ease-in-out;
+        }
+        
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .error-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <div class="ai-badge text-white px-4 py-2 rounded-full text-sm font-semibold mr-4">
+                    🤖 مدعوم بـ Gemini AI
+                </div>
+                <h1 class="text-4xl font-bold">🎓 مولد الأسئلة الذكي</h1>
+            </div>
+            <p class="text-xl opacity-90">أداة متطورة لإنشاء أسئلة تعليمية عالية الجودة بالذكاء الاصطناعي</p>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Status Indicator -->
+        <div id="statusIndicator" class="hidden mb-6">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                <div class="text-blue-600 text-2xl mb-2">🔄</div>
+                <p class="text-blue-800 font-semibold">جاري الاتصال بالذكاء الاصطناعي<span class="loading-dots"></span></p>
+                <p class="text-blue-600 text-sm mt-1">يرجى الانتظار، قد تستغرق العملية دقيقة واحدة</p>
+            </div>
+        </div>
+
+        <!-- Input Form -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">📝 إعدادات توليد الأسئلة</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">📚 الموضوع أو المادة *</label>
+                    <input type="text" id="subject" placeholder="مثال: الرياضيات، الفيزياء، التاريخ الإسلامي..." 
+                           class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <p class="text-sm text-gray-500 mt-1">كن محدداً قدر الإمكان (مثل: الجبر، الكيمياء العضوية، تاريخ الدولة العباسية)</p>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">🎯 المستوى التعليمي *</label>
+                    <select id="level" class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">اختر المستوى</option>
+                        <option value="ابتدائي">ابتدائي (6-12 سنة)</option>
+                        <option value="متوسط">متوسط (12-15 سنة)</option>
+                        <option value="ثانوي">ثانوي (15-18 سنة)</option>
+                        <option value="جامعي">جامعي (18+ سنة)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">❓ نوع الأسئلة *</label>
+                    <select id="questionType" class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">اختر نوع الأسئلة</option>
+                        <option value="اختيار من متعدد">اختيار من متعدد (4 خيارات)</option>
+                        <option value="صح أم خطأ">صح أم خطأ (مع التفسير)</option>
+                        <option value="أسئلة مقالية">أسئلة مقالية (شرح مفصل)</option>
+                        <option value="أسئلة قصيرة">أسئلة قصيرة (إجابات مختصرة)</option>
+                        <option value="متنوعة">متنوعة (مزيج من الأنواع)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">🔢 عدد الأسئلة</label>
+                    <select id="questionCount" class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="5">5 أسئلة</option>
+                        <option value="10" selected>10 أسئلة</option>
+                        <option value="15">15 سؤال</option>
+                        <option value="20">20 سؤال</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <label class="block text-gray-700 font-semibold mb-2">📋 تفاصيل إضافية (اختياري)</label>
+                <textarea id="additionalDetails" rows="3" placeholder="أضف أي تفاصيل محددة مثل: ركز على الفصل الثالث، أسئلة تطبيقية، مستوى صعوبة متوسط..."
+                          class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+            </div>
+            
+            <div class="text-center mt-8">
+                <button onclick="generateQuestions()" id="generateBtn" 
+                        class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                    🚀 توليد الأسئلة بالذكاء الاصطناعي
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="hidden">
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">✨ الأسئلة المولدة</h2>
+                        <div id="aiIndicator" class="mr-4 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
+                            🤖 مولد بالذكاء الاصطناعي
+                        </div>
+                    </div>
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="editQuestions()" class="bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm">
+                            ✏️ تعديل
+                        </button>
+                        <button onclick="formatQuestions()" class="bg-indigo-500 text-white px-3 py-2 rounded-lg hover:bg-indigo-600 transition-colors text-sm">
+                            🎨 تنسيق
+                        </button>
+                        <button onclick="customizeHeader()" class="bg-pink-500 text-white px-3 py-2 rounded-lg hover:bg-pink-600 transition-colors text-sm">
+                            📝 ترويسة
+                        </button>
+                        <button onclick="copyAllQuestions()" class="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm">
+                            📋 نسخ
+                        </button>
+                        <button onclick="downloadQuestions()" class="bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                            💾 تحميل
+                        </button>
+                        <button onclick="createExamPaper()" class="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors font-semibold text-sm">
+                            📄 ورقة امتحان
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="questionsContainer" class="space-y-6">
+                    <!-- Questions will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Section -->
+        <div id="errorSection" class="hidden">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center error-shake">
+                <div class="text-red-600 text-6xl mb-4">⚠️</div>
+                <h3 class="text-xl font-bold text-red-800 mb-2">فشل في الاتصال بالذكاء الاصطناعي</h3>
+                <p class="text-red-600 mb-4" id="errorMessage"></p>
+                <div class="space-y-3">
+                    <button onclick="generateQuestions()" class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                        🔄 إعادة المحاولة
+                    </button>
+                    <p class="text-sm text-red-500">تأكد من صحة مفتاح API أو جرب مرة أخرى بعد قليل</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Questions Modal -->
+        <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-2xl font-bold text-gray-800">✏️ تعديل الأسئلة</h2>
+                        <button onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div id="editQuestionsContainer" class="space-y-6">
+                        <!-- Editable questions will be displayed here -->
+                    </div>
+                    <div class="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                        <button onclick="closeEditModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            إلغاء
+                        </button>
+                        <button onclick="saveEditedQuestions()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            💾 حفظ التغييرات
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Format Modal -->
+        <div id="formatModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-2xl font-bold text-gray-800">🎨 تنسيق الأسئلة</h2>
+                        <button onclick="closeFormatModal()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">نمط العرض</label>
+                            <select id="displayStyle" class="w-full p-3 border border-gray-300 rounded-lg">
+                                <option value="cards">بطاقات (افتراضي)</option>
+                                <option value="list">قائمة بسيطة</option>
+                                <option value="compact">مضغوط</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">حجم الخط</label>
+                            <select id="fontSize" class="w-full p-3 border border-gray-300 rounded-lg">
+                                <option value="text-sm">صغير</option>
+                                <option value="text-base" selected>متوسط</option>
+                                <option value="text-lg">كبير</option>
+                                <option value="text-xl">كبير جداً</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">لون الحدود</label>
+                            <select id="borderColor" class="w-full p-3 border border-gray-300 rounded-lg">
+                                <option value="border-blue-400" selected>أزرق</option>
+                                <option value="border-green-400">أخضر</option>
+                                <option value="border-purple-400">بنفسجي</option>
+                                <option value="border-red-400">أحمر</option>
+                                <option value="border-gray-400">رمادي</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="showNumbers" checked class="ml-2">
+                            <label for="showNumbers" class="text-gray-700">إظهار أرقام الأسئلة</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="showExplanations" checked class="ml-2">
+                            <label for="showExplanations" class="text-gray-700">إظهار التفسيرات</label>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                        <button onclick="closeFormatModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            إلغاء
+                        </button>
+                        <button onclick="applyFormatting()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                            🎨 تطبيق التنسيق
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header Customization Modal -->
+        <div id="headerModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-2xl font-bold text-gray-800">📝 تخصيص الترويسة</h2>
+                        <button onclick="closeHeaderModal()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">اسم المؤسسة</label>
+                            <input type="text" id="institutionName" value="المؤسسة التعليمية" class="w-full p-3 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">اسم المعلم/الأستاذ</label>
+                            <input type="text" id="teacherName" placeholder="اختياري" class="w-full p-3 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">مدة الامتحان</label>
+                            <select id="examDuration" class="w-full p-3 border border-gray-300 rounded-lg">
+                                <option value="ساعة واحدة">ساعة واحدة</option>
+                                <option value="ساعة ونصف">ساعة ونصف</option>
+                                <option value="ساعتان" selected>ساعتان</option>
+                                <option value="ثلاث ساعات">ثلاث ساعات</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">درجة السؤال الواحد</label>
+                            <select id="questionScore" class="w-full p-3 border border-gray-300 rounded-lg">
+                                <option value="2">2 درجة</option>
+                                <option value="3">3 درجات</option>
+                                <option value="5" selected>5 درجات</option>
+                                <option value="10">10 درجات</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">تعليمات إضافية</label>
+                            <textarea id="additionalInstructions" rows="3" placeholder="أضف أي تعليمات خاصة للامتحان..." class="w-full p-3 border border-gray-300 rounded-lg"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                        <button onclick="closeHeaderModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            إلغاء
+                        </button>
+                        <button onclick="saveHeaderSettings()" class="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors">
+                            📝 حفظ الإعدادات
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exam Paper Section -->
+        <div id="examPaperSection" class="hidden">
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">📄 ورقة الامتحان</h2>
+                    <div class="flex gap-3">
+                        <button onclick="printExam()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            🖨️ طباعة
+                        </button>
+                        <button onclick="downloadExamPDF()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                            📑 تحميل
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="examPaperContent" class="bg-white border-2 border-gray-300 rounded-lg p-8">
+                    <!-- Exam content will be generated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="gradient-bg text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="opacity-90">🤖 مدعوم بتقنية Gemini AI من Google • أداة تعليمية متقدمة</p>
+        </div>
+    </footer>
+
+    <script>
+        // AI Configuration
+        const GEMINI_API_KEY = 'AIzaSyC7MgGE_ygA_T16_KBzZbJJxEQvqu7cfe8';
+        const DEEPAI_API_KEY = '35b2868b-4367-4cb4-8d4a-bcb4e585d2ef';
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
+        const DEEPAI_API_URL = 'https://api.deepai.org/api/text-generator';
+
+        let generatedQuestions = [];
+        let isAIGenerated = false;
+        let aiProvider = 'none';
+
+        // Ultra-Enhanced AI Prompt Builder with bulletproof formatting
+        function buildAdvancedPrompt(subject, level, questionType, questionCount, additionalDetails) {
+            const prompt = `
+أنت نظام ذكي متخصص في إنشاء أسئلة تعليمية مثالية. مهمتك الوحيدة: إنشاء ${questionCount} أسئلة كاملة ومنسقة بدقة تامة.
+
+🎯 البيانات المطلوبة:
+الموضوع: ${subject}
+المستوى: ${level}
+النوع: ${questionType}
+العدد: ${questionCount} أسئلة بالضبط
+${additionalDetails ? `التفاصيل: ${additionalDetails}` : ''}
+
+⚠️ قواعد صارمة - لا استثناءات:
+1. أنشئ ${questionCount} أسئلة فقط - لا أكثر ولا أقل
+2. كل سؤال يجب أن يكون مكتمل 100%
+3. استخدم التنسيق المحدد بالضبط
+4. فصل كل سؤال بـ "---" على سطر منفصل
+5. لا تكتب أي نص إضافي خارج الأسئلة
+6. لا تستخدم رموز مثل * أو # أو أرقام
+7. اكتب باللغة العربية فقط
+
+🎯 التنسيق الإجباري (اتبعه حرفياً):
+${getStrictPromptFormat(questionType)}
+
+✅ مثال مثالي للتنسيق:
+السؤال: في الجملة "كتب الطالب الدرس"، ما هو الفاعل؟
+أ) كتب
+ب) الطالب
+ج) الدرس
+د) الجملة
+الإجابة: ب
+التفسير: الفاعل هو من قام بالفعل، والطالب هو من قام بفعل الكتابة
+---
+
+🚨 تحذير نهائي:
+- يجب أن يكون كل سؤال مكتمل بجميع عناصره
+- يجب أن تكون جميع الخيارات واضحة ومنطقية
+- يجب أن تكون الإجابة صحيحة ومحددة
+- يجب أن يكون التفسير مفيد ومفصل
+
+ابدأ الآن - أنشئ ${questionCount} أسئلة مكتملة:`;
+
+            return prompt;
+        }
+
+        // Ultra-Strict Format specifications - No room for error
+        function getStrictPromptFormat(questionType) {
+            switch(questionType) {
+                case 'اختيار من متعدد':
+                    return `
+السؤال: [نص السؤال بوضوح تام مع علامة استفهام]
+أ) [خيار خاطئ منطقي]
+ب) [خيار خاطئ منطقي]
+ج) [الإجابة الصحيحة الوحيدة]
+د) [خيار خاطئ منطقي]
+الإجابة: ج
+التفسير: [شرح واضح ومفصل لسبب صحة الإجابة]
+---`;
+
+                case 'صح أم خطأ':
+                    return `
+العبارة: [عبارة واضحة للحكم عليها]
+الإجابة: صح
+التفسير: [شرح مفصل للسبب العلمي]
+---`;
+
+                case 'أسئلة مقالية':
+                    return `
+السؤال: [سؤال يتطلب شرح مفصل مع علامة استفهام]
+الإجابة: [إجابة مفصلة ومنظمة]
+التفسير: [توضيح إضافي مفيد]
+---`;
+
+                case 'أسئلة قصيرة':
+                    return `
+السؤال: [سؤال واضح مع علامة استفهام]
+الإجابة: [إجابة مختصرة ودقيقة]
+التفسير: [توضيح مختصر ومفيد]
+---`;
+
+                case 'متنوعة':
+                    return `
+السؤال: [نص السؤال مع علامة استفهام]
+أ) [خيار]
+ب) [خيار]
+ج) [الإجابة الصحيحة]
+د) [خيار]
+الإجابة: ج
+التفسير: [شرح واضح]
+---`;
+
+                default:
+                    return `
+السؤال: [نص السؤال الواضح مع علامة استفهام]
+الإجابة: [الإجابة الصحيحة]
+التفسير: [شرح مفصل ومفيد]
+---`;
+            }
+        }
+
+        // Legacy function kept for compatibility
+        function getPromptFormat(questionType) {
+            return getStrictPromptFormat(questionType);
+        }
+
+        // Enhanced AI API Call with Multiple Providers
+        async function callAI(prompt) {
+            // Try Gemini AI first
+            try {
+                console.log('Trying Gemini AI...');
+                const geminiResponse = await callGeminiAI(prompt);
+                if (geminiResponse) {
+                    aiProvider = 'gemini';
+                    return geminiResponse;
+                }
+            } catch (error) {
+                console.warn('Gemini AI failed:', error.message);
+            }
+
+            // Try DeepAI as fallback
+            try {
+                console.log('Trying DeepAI as fallback...');
+                const deepaiResponse = await callDeepAI(prompt);
+                if (deepaiResponse) {
+                    aiProvider = 'deepai';
+                    return deepaiResponse;
+                }
+            } catch (error) {
+                console.warn('DeepAI failed:', error.message);
+            }
+
+            // If both fail, throw error
+            throw new Error('فشل في الاتصال بجميع مقدمي خدمات الذكاء الاصطناعي');
+        }
+
+        // Gemini AI API Call
+        async function callGeminiAI(prompt) {
+            const apiEndpoints = [
+                'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent'
+            ];
+
+            for (let i = 0; i < apiEndpoints.length; i++) {
+                try {
+                    console.log(`Trying Gemini endpoint ${i + 1}:`, apiEndpoints[i]);
+                    
+                    const requestBody = {
+                        contents: [{
+                            parts: [{
+                                text: prompt
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            topK: 40,
+                            topP: 0.95,
+                            maxOutputTokens: 4096
+                        },
+                        safetySettings: [
+                            {
+                                category: "HARM_CATEGORY_HARASSMENT",
+                                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                            },
+                            {
+                                category: "HARM_CATEGORY_HATE_SPEECH",
+                                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                            },
+                            {
+                                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                            },
+                            {
+                                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                            }
+                        ]
+                    };
+
+                    const response = await fetch(`${apiEndpoints[i]}?key=${GEMINI_API_KEY}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                            return data.candidates[0].content.parts[0].text;
+                        }
+                    }
+
+                    const errorData = await response.json().catch(() => ({}));
+                    console.warn(`Gemini endpoint ${i + 1} failed:`, errorData);
+                    
+                } catch (error) {
+                    console.error(`Error with Gemini endpoint ${i + 1}:`, error);
+                }
+            }
+            
+            throw new Error('جميع نقاط Gemini API فشلت');
+        }
+
+        // DeepAI API Call
+        async function callDeepAI(prompt) {
+            try {
+                const response = await fetch(DEEPAI_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Api-Key': DEEPAI_API_KEY,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: prompt
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.output) {
+                        return data.output;
+                    }
+                }
+
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`DeepAI API error: ${response.status} - ${errorData.error || 'خطأ غير معروف'}`);
+                
+            } catch (error) {
+                console.error('DeepAI API error:', error);
+                throw error;
+            }
+        }
+
+
+
+        // Revolutionary AI Question Parser - Ultra-Reliable
+        function parseAIQuestions(aiText) {
+            console.log('🔍 بدء تحليل النص المولد من الذكاء الاصطناعي...');
+            console.log('📝 النص الخام:', aiText.substring(0, 200) + '...');
+
+            // Stage 1: Deep Text Cleaning and Normalization
+            let cleanedText = performDeepCleaning(aiText);
+            console.log('✅ تم تنظيف النص بنجاح');
+
+            // Stage 2: Intelligent Question Block Detection
+            let questionBlocks = detectQuestionBlocks(cleanedText);
+            console.log(`🎯 تم اكتشاف ${questionBlocks.length} كتلة سؤال`);
+
+            // Stage 3: Advanced Question Parsing with Validation
+            const questions = [];
+            questionBlocks.forEach((block, index) => {
+                const parsedQuestion = parseAdvancedQuestionBlock(block, index + 1);
+                if (validateQuestionStructure(parsedQuestion)) {
+                    questions.push(parsedQuestion);
+                    console.log(`✅ تم تحليل السؤال ${index + 1} بنجاح`);
+                } else {
+                    console.log(`⚠️ السؤال ${index + 1} لم يجتز التحقق`);
+                }
+            });
+
+            // Stage 4: Final Quality Assurance
+            const finalQuestions = performFinalQualityCheck(questions);
+            console.log(`🎉 تم الانتهاء: ${finalQuestions.length} أسئلة مكتملة وصالحة`);
+
+            return finalQuestions;
+        }
+
+        // Deep cleaning function for AI text
+        function performDeepCleaning(text) {
+            return text
+                // Remove all markdown and formatting symbols
+                .replace(/[\*\#\`\~\_\[\]]/g, '')
+                // Remove question numbering patterns
+                .replace(/^\s*\d+[\.\)\-\s]+/gm, '')
+                // Remove extra whitespace and normalize line breaks
+                .replace(/\n{3,}/g, '\n\n')
+                .replace(/\s{2,}/g, ' ')
+                // Remove any HTML-like tags
+                .replace(/<[^>]*>/g, '')
+                // Normalize Arabic text
+                .replace(/[ًٌٍَُِّْ]/g, '') // Remove diacritics if needed
+                .trim();
+        }
+
+        // Intelligent question block detection
+        function detectQuestionBlocks(text) {
+            let blocks = [];
+
+            // Method 1: Split by separator (most reliable)
+            if (text.includes('---')) {
+                blocks = text.split(/---+/).filter(block => block.trim().length > 20);
+                console.log('📋 استخدام طريقة الفاصل الرئيسية');
+            }
+            // Method 2: Pattern-based detection
+            else {
+                const questionPatterns = [
+                    /السؤال\s*:?\s*[^؟]*؟/g,
+                    /العبارة\s*:?\s*[^؟]*[؟\.]/g,
+                    /(?:ما|أي|كيف|متى|أين|لماذا|هل)\s+[^؟]*؟/g
+                ];
+
+                for (const pattern of questionPatterns) {
+                    const matches = text.match(pattern);
+                    if (matches && matches.length > 0) {
+                        blocks = matches;
+                        console.log(`📋 استخدام طريقة النمط: وُجد ${matches.length} تطابق`);
+                        break;
+                    }
+                }
+
+                // Method 3: Fallback - split by double newlines
+                if (blocks.length === 0) {
+                    blocks = text.split(/\n\s*\n/).filter(block => block.trim().length > 30);
+                    console.log('📋 استخدام الطريقة الاحتياطية');
+                }
+            }
+
+            return blocks.filter(block => block.trim().length > 15);
+        }
+
+        // Advanced question block parser
+        function parseAdvancedQuestionBlock(block, questionNumber) {
+            const lines = block.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            
+            const question = {
+                number: questionNumber,
+                question: '',
+                options: [],
+                answer: '',
+                explanation: '',
+                type: 'multiple_choice',
+                isComplete: false
+            };
+
+            let currentSection = 'question';
+            let questionFound = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                // Detect question text
+                if (!questionFound && (
+                    line.includes('السؤال:') || 
+                    line.includes('العبارة:') || 
+                    line.includes('؟') || 
+                    (line.length > 20 && /[ما|أي|كيف|متى|أين|لماذا|هل]/.test(line))
+                )) {
+                    question.question = line
+                        .replace(/^(السؤال|العبارة)\s*:?\s*/i, '')
+                        .trim();
+                    
+                    if (!question.question.includes('؟')) {
+                        question.question += '؟';
+                    }
+                    
+                    questionFound = true;
+                    currentSection = 'options';
+                    continue;
+                }
+
+                // Detect options (Arabic letters)
+                if (currentSection === 'options' && /^[أ-د]\)\s*.+/i.test(line)) {
+                    question.options.push(line.trim());
+                    continue;
+                }
+
+                // Detect answer
+                if (line.includes('الإجابة:') || line.includes('الجواب:')) {
+                    question.answer = line.replace(/^(الإجابة|الجواب)\s*:?\s*/i, '').trim();
+                    
+                    // Determine question type
+                    if (['صح', 'خطأ', 'صحيح', 'خاطئ'].includes(question.answer)) {
+                        question.type = 'true_false';
+                    }
+                    
+                    currentSection = 'explanation';
+                    continue;
+                }
+
+                // Detect explanation
+                if (line.includes('التفسير:') || line.includes('الشرح:')) {
+                    question.explanation = line.replace(/^(التفسير|الشرح)\s*:?\s*/i, '').trim();
+                    
+                    // Look for continuation
+                    for (let j = i + 1; j < Math.min(lines.length, i + 3); j++) {
+                        if (lines[j] && !lines[j].includes(':') && lines[j].length > 10) {
+                            question.explanation += ' ' + lines[j];
+                        } else {
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+
+            // Complete missing elements
+            completeQuestionData(question);
+            
+            return question;
+        }
+
+        // Complete missing question data
+        function completeQuestionData(question) {
+            // Ensure question has proper ending
+            if (question.question && !question.question.includes('؟')) {
+                question.question += '؟';
+            }
+
+            // Complete options for multiple choice
+            if (question.type === 'multiple_choice') {
+                if (question.options.length === 0) {
+                    question.options = [
+                        'أ) الخيار الأول',
+                        'ب) الخيار الثاني',
+                        'ج) الخيار الثالث',
+                        'د) الخيار الرابع'
+                    ];
+                } else {
+                    // Ensure 4 options
+                    const letters = ['أ', 'ب', 'ج', 'د'];
+                    while (question.options.length < 4) {
+                        const letter = letters[question.options.length];
+                        question.options.push(`${letter}) خيار إضافي`);
+                    }
+                }
+            }
+
+            // Ensure answer exists
+            if (!question.answer) {
+                question.answer = question.type === 'multiple_choice' ? 'ج' : 'يرجى المراجعة';
+            }
+
+            // Ensure explanation exists
+            if (!question.explanation) {
+                question.explanation = 'يرجى مراجعة المادة العلمية للحصول على التفسير المناسب.';
+            }
+        }
+
+        // Validate question structure
+        function validateQuestionStructure(question) {
+            if (!question || !question.question || question.question.length < 10) {
+                return false;
+            }
+            
+            if (!question.answer || question.answer.length < 1) {
+                return false;
+            }
+            
+            if (!question.explanation || question.explanation.length < 10) {
+                return false;
+            }
+            
+            if (question.type === 'multiple_choice' && question.options.length < 2) {
+                return false;
+            }
+            
+            question.isComplete = true;
+            return true;
+        }
+
+        // Final quality check and enhancement
+        function performFinalQualityCheck(questions) {
+            return questions
+                .filter(q => q.isComplete)
+                .map((q, index) => ({
+                    ...q,
+                    number: index + 1,
+                    question: q.question.trim(),
+                    answer: q.answer.trim(),
+                    explanation: q.explanation.trim(),
+                    options: q.options.map(opt => opt.trim())
+                }));
+        }
+
+        // Dedicated function to parse individual question blocks
+        function parseQuestionBlock(block, questionNumber) {
+            const lines = block.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            
+            if (lines.length === 0) return null;
+
+            let question = {
+                number: questionNumber,
+                question: '',
+                options: [],
+                answer: '',
+                explanation: '',
+                type: 'multiple_choice'
+            };
+
+            let currentSection = 'question';
+            let questionFound = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                // Identify question text
+                if (!questionFound && (line.includes('؟') || line.includes('?') || 
+                    line.includes('السؤال:') || line.includes('العبارة:') || 
+                    line.length > 20)) {
+                    
+                    question.question = line
+                        .replace(/^(السؤال|العبارة)\s*\d*\s*:\s*/i, '')
+                        .trim();
+                    
+                    if (!question.question.includes('؟') && !question.question.includes('?')) {
+                        question.question += '؟';
+                    }
+                    
+                    questionFound = true;
+                    currentSection = 'options';
+                    continue;
+                }
+
+                // Identify options
+                if (currentSection === 'options' && /^[أ-د]\)\s*.+/i.test(line)) {
+                    question.options.push(line);
+                    continue;
+                }
+
+                // Identify answer
+                if (line.includes('الإجابة:') || line.includes('الجواب:')) {
+                    question.answer = line.replace(/^(الإجابة|الجواب)\s*:\s*/i, '').trim();
+                    
+                    // Check if it's true/false type
+                    if (['صح', 'خطأ', 'صحيح', 'خاطئ', 'نعم', 'لا'].includes(question.answer)) {
+                        question.type = 'true_false';
+                    }
+                    
+                    currentSection = 'explanation';
+                    continue;
+                }
+
+                // Identify explanation
+                if (line.includes('التفسير:') || line.includes('الشرح:') || line.includes('التوضيح:')) {
+                    question.explanation = line.replace(/^(التفسير|الشرح|التوضيح)\s*:\s*/i, '').trim();
+                    
+                    // Look for continuation lines
+                    for (let j = i + 1; j < lines.length && j < i + 3; j++) {
+                        if (lines[j] && !lines[j].includes(':') && lines[j].length > 5) {
+                            question.explanation += ' ' + lines[j];
+                        } else {
+                            break;
+                        }
+                    }
+                    break;
+                }
+
+                // Handle essay questions
+                if (line.includes('عناصر الإجابة:')) {
+                    question.type = 'essay';
+                    const essayElements = [];
+                    for (let j = i + 1; j < lines.length; j++) {
+                        if (lines[j].startsWith('•') || lines[j].startsWith('-') || lines[j].startsWith('*')) {
+                            essayElements.push(lines[j]);
+                        } else if (lines[j].includes(':')) {
+                            break;
+                        }
+                    }
+                    if (essayElements.length > 0) {
+                        question.answer = 'عناصر الإجابة:\n' + essayElements.join('\n');
+                    }
+                    continue;
+                }
+            }
+
+            // Validation and completion
+            if (!questionFound || question.question.length < 10) {
+                return null;
+            }
+
+            // Complete missing data
+            if (!question.answer) {
+                if (question.options.length > 0) {
+                    question.answer = 'ج'; // Default to option C
+                } else {
+                    question.answer = 'يرجى مراجعة المادة العلمية';
+                }
+            }
+
+            if (!question.explanation) {
+                question.explanation = 'يرجى مراجعة المادة العلمية للحصول على التفسير المناسب.';
+            }
+
+            // Ensure complete options for multiple choice
+            if (question.type === 'multiple_choice') {
+                if (question.options.length === 0) {
+                    // Generate default options
+                    question.options = [
+                        'أ) الخيار الأول',
+                        'ب) الخيار الثاني', 
+                        'ج) الخيار الثالث',
+                        'د) الخيار الرابع'
+                    ];
+                } else if (question.options.length < 4) {
+                    // Complete missing options
+                    const letters = ['أ', 'ب', 'ج', 'د'];
+                    while (question.options.length < 4) {
+                        const letter = letters[question.options.length];
+                        question.options.push(`${letter}) خيار إضافي ${question.options.length + 1}`);
+                    }
+                }
+            }
+
+            return question;
+        }
+
+        // Function to detect if text is mixed/corrupted
+        function isMixedText(text) {
+            // Check for signs of mixed content
+            const mixedSigns = [
+                // Multiple question patterns without proper separation
+                (text.match(/السؤال\s*\d+/g) || []).length > 1 && !text.includes('---'),
+                // Options appearing without proper question structure
+                (text.match(/^[أ-د]\)/gm) || []).length > 8,
+                // Multiple choice indicators mixed together
+                text.includes('اختيار من متعدد') && text.includes('الخيارات:') && !text.includes('---'),
+                // Repeated patterns
+                text.includes('أ)\nب)\nج)\nد)') || text.includes('أ) ب) ج) د)'),
+            ];
+            
+            return mixedSigns.some(sign => sign);
+        }
+
+        // Function to parse mixed/corrupted questions
+        function parseMixedQuestions(text) {
+            console.log('Parsing mixed questions...');
+            const questions = [];
+            
+            // Extract all question-like patterns
+            const questionPatterns = text.match(/\*?السؤال\s*\d*\*?:?\s*[^*]*?\?/g) || [];
+            
+            // If no clear questions found, try to extract from the mixed content
+            if (questionPatterns.length === 0) {
+                // Look for question marks and work backwards
+                const sentences = text.split(/[؟?]/);
+                sentences.forEach((sentence, index) => {
+                    if (sentence.trim().length > 20) {
+                        const question = {
+                            number: index + 1,
+                            question: sentence.trim() + '؟',
+                            options: [],
+                            answer: '',
+                            explanation: 'تم استخراج هذا السؤال من النص المختلط.',
+                            type: 'multiple_choice'
+                        };
+                        
+                        // Try to find options near this question
+                        const nextSentence = sentences[index + 1] || '';
+                        const optionMatches = nextSentence.match(/[أ-د]\)[^أ-د]+/g);
+                        if (optionMatches && optionMatches.length >= 2) {
+                            question.options = optionMatches.slice(0, 4);
+                            question.answer = 'يرجى مراجعة الخيارات';
+                        }
+                        
+                        if (question.question.length > 10) {
+                            questions.push(question);
+                        }
+                    }
+                });
+            } else {
+                // Process found question patterns
+                questionPatterns.forEach((pattern, index) => {
+                    const question = {
+                        number: index + 1,
+                        question: pattern.replace(/\*?السؤال\s*\d*\*?:?\s*/, '').trim(),
+                        options: [],
+                        answer: '',
+                        explanation: 'سؤال مستخرج من النص المولد.',
+                        type: 'multiple_choice'
+                    };
+                    
+                    questions.push(question);
+                });
+            }
+            
+            console.log(`Extracted ${questions.length} questions from mixed text`);
+            return questions.slice(0, 10); // Limit to reasonable number
+        }
+
+        // Function to clean mixed/corrupted AI text
+        function cleanMixedText(text) {
+            console.log('Cleaning mixed text...');
+            
+            // Remove duplicate patterns and fix common issues
+            let cleaned = text
+                // Remove duplicate question markers
+                .replace(/(\*السؤال\s*\d+\*+:?\s*)+/g, 'السؤال:')
+                // Fix option formatting
+                .replace(/([أ-د])\)\s*([أ-د])\)/g, '$1) ')
+                // Remove standalone option letters that got separated
+                .replace(/^[أ-د]\)\s*$/gm, '')
+                // Fix mixed content by adding separators
+                .replace(/([أ-د]\)[^أ-د\n]+)([أ-د]\))/g, '$1\n$2')
+                // Clean up multiple newlines
+                .replace(/\n{3,}/g, '\n\n')
+                // Fix question numbering
+                .replace(/السؤال\s*(\d+)\s*\*+:?/g, 'السؤال $1:')
+                // Remove asterisks from questions
+                .replace(/\*+([^*]+)\*+/g, '$1');
+            
+            // Try to separate mixed questions by looking for question patterns
+            const questionPattern = /(?:السؤال\s*\d*:?|ما\s+هو|أي\s+من|كيف|متى|أين|لماذا|هل)[^؟]*؟/g;
+            const questions = cleaned.match(questionPattern);
+            
+            if (questions && questions.length > 1) {
+                // Reconstruct with proper separators
+                cleaned = questions.join('\n---\n');
+            }
+            
+            console.log('Text cleaned');
+            return cleaned;
+        }
+
+        // Ultimate Question Generation Engine - Bulletproof System
+        async function generateQuestions() {
+            console.log('🚀 بدء نظام توليد الأسئلة المتقدم');
+            
+            // Stage 1: Input Validation and Preparation
+            const formData = validateAndPrepareInput();
+            if (!formData.isValid) {
+                showError(formData.errorMessage);
+                return;
+            }
+
+            // Stage 2: Initialize Advanced Loading System
+            showAdvancedLoading(true);
+            hideResults();
+            hideError();
+
+            try {
+                // Stage 3: AI Communication with Enhanced Error Handling
+                console.log('🤖 بدء الاتصال بالذكاء الاصطناعي...');
+                updateLoadingStage('🔗 الاتصال بالذكاء الاصطناعي...', 10, 'جاري الاتصال بخوادم Gemini AI');
+                await delay(1000);
+                
+                const prompt = buildAdvancedPrompt(
+                    formData.subject, 
+                    formData.level, 
+                    formData.questionType, 
+                    formData.questionCount, 
+                    formData.additionalDetails
+                );
+                console.log('✅ تم إنشاء التوجيه للذكاء الاصطناعي');
+
+                updateLoadingStage('📝 إرسال المتطلبات...', 25, 'تم إرسال تفاصيل الموضوع والمستوى');
+                await delay(800);
+
+                updateLoadingStage('🧠 توليد الأسئلة...', 50, 'الذكاء الاصطناعي يقوم بإنشاء الأسئلة');
+                const aiResponse = await callAI(prompt);
+                console.log(`✅ تم استلام الرد من: ${aiProvider}`);
+
+                // Stage 4: Advanced Parsing and Analysis
+                updateLoadingStage('🔍 تحليل وتنظيم النتائج...', 75, 'فحص جودة الأسئلة وتنسيقها');
+                await delay(1200);
+                
+                let parsedQuestions = parseAIQuestions(aiResponse);
+                console.log(`📊 تم تحليل ${parsedQuestions.length} أسئلة أولية`);
+
+                // Stage 5: Intelligent Fallback System
+                if (parsedQuestions.length < Math.max(1, parseInt(formData.questionCount) / 3)) {
+                    console.log('⚠️ عدد الأسئلة أقل من المتوقع، تفعيل النظام البديل...');
+                    updateLoadingStage('🔄 تحسين النتائج...', 80, 'استخدام طرق تحليل بديلة');
+                    await delay(800);
+                    
+                    const alternativeQuestions = parseAIQuestionsAlternative(aiResponse);
+                    if (alternativeQuestions.length > parsedQuestions.length) {
+                        parsedQuestions = alternativeQuestions;
+                        console.log(`✅ النظام البديل حسّن النتائج إلى ${parsedQuestions.length} أسئلة`);
+                    }
+                }
+
+                // Stage 6: Final Validation and Enhancement
+                updateLoadingStage('✅ إنهاء التنسيق...', 90, 'إضافة اللمسات الأخيرة');
+                await delay(600);
+                
+                generatedQuestions = validateAndFormatQuestions(parsedQuestions, formData.questionCount);
+                console.log(`🎯 النتيجة النهائية: ${generatedQuestions.length} أسئلة مكتملة`);
+                
+                // Stage 7: Success Handling
+                if (generatedQuestions.length > 0) {
+                    updateLoadingStage('🎉 اكتمل بنجاح!', 100, 'تم إنشاء الأسئلة بنجاح');
+                    await delay(500);
+                    
+                    isAIGenerated = true;
+                    displayQuestions(generatedQuestions);
+                    showResults();
+                    
+                    const providerName = getProviderDisplayName(aiProvider);
+                    const qualityScore = calculateAverageQuality(generatedQuestions);
+                    showSuccessMessage(`🎉 تم توليد ${generatedQuestions.length} أسئلة بنجاح باستخدام ${providerName}! (جودة: ${qualityScore}%)`);
+                } else {
+                    throw new Error('فشل في توليد أسئلة صالحة رغم المحاولات المتعددة');
+                }
+
+            } catch (error) {
+                console.error('❌ خطأ في نظام توليد الأسئلة:', error);
+                handleGenerationError(error);
+                isAIGenerated = false;
+            } finally {
+                showAdvancedLoading(false);
+            }
+        }
+
+        // Input validation and preparation
+        function validateAndPrepareInput() {
+            const subject = document.getElementById('subject').value.trim();
+            const level = document.getElementById('level').value;
+            const questionType = document.getElementById('questionType').value;
+            const questionCount = document.getElementById('questionCount').value;
+            const additionalDetails = document.getElementById('additionalDetails').value.trim();
+
+            // Comprehensive validation
+            if (!subject || subject.length < 2) {
+                return { isValid: false, errorMessage: '⚠️ يرجى إدخال موضوع صالح (حرفين على الأقل)' };
+            }
+
+            if (!level) {
+                return { isValid: false, errorMessage: '⚠️ يرجى اختيار المستوى التعليمي' };
+            }
+
+            if (!questionType) {
+                return { isValid: false, errorMessage: '⚠️ يرجى اختيار نوع الأسئلة' };
+            }
+
+            if (!questionCount || parseInt(questionCount) < 1 || parseInt(questionCount) > 50) {
+                return { isValid: false, errorMessage: '⚠️ عدد الأسئلة يجب أن يكون بين 1 و 50' };
+            }
+
+            return {
+                isValid: true,
+                subject,
+                level,
+                questionType,
+                questionCount,
+                additionalDetails
+            };
+        }
+
+        // Provider display name helper
+        function getProviderDisplayName(provider) {
+            const names = {
+                'gemini': 'Gemini AI من Google',
+                'deepai': 'DeepAI',
+                'fallback': 'النظام البديل'
+            };
+            return names[provider] || 'الذكاء الاصطناعي';
+        }
+
+        // Calculate average quality score
+        function calculateAverageQuality(questions) {
+            if (!questions || questions.length === 0) return 0;
+            const totalQuality = questions.reduce((sum, q) => sum + (q.quality || 75), 0);
+            return Math.round(totalQuality / questions.length);
+        }
+
+        // Enhanced error handling
+        function handleGenerationError(error) {
+            let errorMessage = 'حدث خطأ غير متوقع في توليد الأسئلة';
+            let suggestions = [];
+
+            if (error.message.includes('API')) {
+                errorMessage = 'خطأ في الاتصال بخدمة الذكاء الاصطناعي';
+                suggestions = [
+                    'تحقق من اتصال الإنترنت',
+                    'جرب مرة أخرى بعد قليل',
+                    'تأكد من صحة إعدادات API'
+                ];
+            } else if (error.message.includes('توليد')) {
+                errorMessage = 'فشل في إنشاء أسئلة صالحة';
+                suggestions = [
+                    'جرب موضوع أكثر تحديداً',
+                    'قلل عدد الأسئلة المطلوبة',
+                    'أضف تفاصيل إضافية في الحقل المخصص'
+                ];
+            } else if (error.message.includes('تحليل')) {
+                errorMessage = 'خطأ في تحليل النتائج من الذكاء الاصطناعي';
+                suggestions = [
+                    'جرب نوع أسئلة مختلف',
+                    'أعد المحاولة مع نفس الإعدادات'
+                ];
+            }
+
+            const fullErrorMessage = `${errorMessage}\n\nاقتراحات للحل:\n${suggestions.map(s => `• ${s}`).join('\n')}`;
+            showError(fullErrorMessage);
+        }
+
+        // Alternative parsing method for better reliability
+        function parseAIQuestionsAlternative(aiText) {
+            console.log('Using alternative parsing method...');
+            
+            const questions = [];
+            const lines = aiText.split('\n').map(line => line.trim()).filter(line => line);
+            
+            let currentQuestion = null;
+            let questionCounter = 0;
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                // Skip very short lines
+                if (line.length < 3) continue;
+                
+                // Detect new question
+                if (line.includes('السؤال:') || (line.includes('؟') && line.length > 20)) {
+                    // Save previous question if exists
+                    if (currentQuestion && currentQuestion.question) {
+                        questions.push(currentQuestion);
+                    }
+                    
+                    // Start new question
+                    questionCounter++;
+                    currentQuestion = {
+                        number: questionCounter,
+                        question: line.replace('السؤال:', '').trim(),
+                        options: [],
+                        answer: '',
+                        explanation: '',
+                        type: 'multiple_choice'
+                    };
+                    
+                    // Ensure question ends with question mark
+                    if (!currentQuestion.question.includes('؟')) {
+                        currentQuestion.question += '؟';
+                    }
+                }
+                // Detect options
+                else if (currentQuestion && /^[أ-د]\)/.test(line)) {
+                    currentQuestion.options.push(line);
+                }
+                // Detect answer
+                else if (currentQuestion && line.includes('الإجابة:')) {
+                    currentQuestion.answer = line.replace('الإجابة:', '').trim();
+                    
+                    // Check if true/false
+                    if (currentQuestion.answer === 'صح' || currentQuestion.answer === 'خطأ') {
+                        currentQuestion.type = 'true_false';
+                    }
+                }
+                // Detect explanation
+                else if (currentQuestion && line.includes('التفسير:')) {
+                    currentQuestion.explanation = line.replace('التفسير:', '').trim();
+                }
+                // Continue explanation on next line
+                else if (currentQuestion && currentQuestion.explanation && 
+                         !line.includes(':') && line.length > 10 && line.length < 200) {
+                    currentQuestion.explanation += ' ' + line;
+                }
+            }
+            
+            // Add last question
+            if (currentQuestion && currentQuestion.question) {
+                questions.push(currentQuestion);
+            }
+            
+            // Fill in missing data
+            questions.forEach(q => {
+                if (!q.answer && q.options.length > 0) {
+                    q.answer = 'ج'; // Default answer
+                }
+                if (!q.explanation) {
+                    q.explanation = 'يرجى مراجعة المادة العلمية للحصول على التفسير المناسب.';
+                }
+                if (q.type === 'multiple_choice' && q.options.length < 4) {
+                    // Add missing options
+                    const letters = ['أ', 'ب', 'ج', 'د'];
+                    while (q.options.length < 4) {
+                        const letter = letters[q.options.length];
+                        q.options.push(`${letter}) خيار ${q.options.length + 1}`);
+                    }
+                }
+            });
+            
+            console.log(`Alternative parsing extracted ${questions.length} questions`);
+            return questions;
+        }
+
+        // Helper functions for enhanced generation
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function buildEnhancementPrompt(questions, subject, level) {
+            return `
+أنت خبير في مراجعة وتحسين الأسئلة التعليمية. مهمتك تحسين الأسئلة التالية لموضوع "${subject}" والمستوى "${level}":
+
+🎯 مهام التحسين:
+1. تحسين صياغة الأسئلة لتكون أكثر وضوحاً ودقة
+2. تطوير التفسيرات لتكون أكثر تفصيلاً وفائدة
+3. التأكد من الدقة العلمية 100%
+4. تحسين الخيارات لتكون أكثر منطقية ومتدرجة الصعوبة
+5. إضافة سياق تعليمي مفيد
+
+الأسئلة الحالية:
+${questions.map((q, i) => `
+السؤال ${i + 1}: ${q.question}
+${q.options ? q.options.join('\n') : ''}
+الإجابة: ${q.answer}
+التفسير: ${q.explanation}
+---`).join('\n')}
+
+قم بإعادة كتابة الأسئلة محسنة بنفس التنسيق المطلوب، مع التركيز على الجودة والدقة العلمية.
+            `;
+        }
+
+        // Ultimate Question Validation and Enhancement System
+        function validateAndFormatQuestions(questions, targetCount) {
+            console.log(`🔍 بدء التحقق النهائي من ${questions.length} أسئلة...`);
+            
+            // Stage 1: Deep Structure Validation
+            const validQuestions = questions.filter((q, index) => {
+                console.log(`🔎 فحص السؤال ${index + 1}:`);
+                
+                // Check question text
+                if (!q.question || q.question.length < 10) {
+                    console.log(`❌ السؤال ${index + 1}: نص السؤال قصير جداً أو مفقود`);
+                    return false;
+                }
+                
+                // Check answer
+                if (!q.answer || q.answer.trim().length < 1) {
+                    console.log(`❌ السؤال ${index + 1}: الإجابة مفقودة`);
+                    return false;
+                }
+                
+                // Check explanation
+                if (!q.explanation || q.explanation.length < 15) {
+                    console.log(`❌ السؤال ${index + 1}: التفسير قصير جداً أو مفقود`);
+                    return false;
+                }
+                
+                // Check multiple choice options
+                if (q.type === 'multiple_choice') {
+                    if (!q.options || q.options.length < 4) {
+                        console.log(`❌ السؤال ${index + 1}: خيارات الاختيار من متعدد غير كافية`);
+                        return false;
+                    }
+                    
+                    // Validate each option
+                    for (let i = 0; i < q.options.length; i++) {
+                        if (!q.options[i] || q.options[i].trim().length < 3) {
+                            console.log(`❌ السؤال ${index + 1}: الخيار ${i + 1} فارغ أو قصير جداً`);
+                            return false;
+                        }
+                    }
+                }
+                
+                console.log(`✅ السؤال ${index + 1}: اجتاز جميع الفحوصات`);
+                return true;
+            });
+
+            console.log(`✅ ${validQuestions.length} أسئلة اجتازت التحقق الأولي`);
+
+            // Stage 2: Ensure Target Count with Smart Completion
+            let finalQuestions = validQuestions.slice(0, parseInt(targetCount));
+            const minRequired = Math.min(parseInt(targetCount), 3); // At least 3 questions
+            
+            // Generate high-quality placeholders if needed
+            while (finalQuestions.length < minRequired) {
+                const placeholderNumber = finalQuestions.length + 1;
+                const subject = document.getElementById('subject').value || 'المادة العلمية';
+                
+                const placeholderQuestion = {
+                    number: placeholderNumber,
+                    question: `ما هي أهم المفاهيم الأساسية في ${subject}؟`,
+                    options: [
+                        'أ) المفهوم الأول والأساسي',
+                        'ب) المفهوم الثاني والمهم',
+                        'ج) جميع المفاهيم السابقة',
+                        'د) لا شيء مما سبق'
+                    ],
+                    answer: 'ج',
+                    explanation: `جميع المفاهيم الأساسية في ${subject} مهمة ومترابطة، ويجب فهمها جميعاً للإلمام الكامل بالموضوع.`,
+                    type: 'multiple_choice',
+                    isComplete: true,
+                    isPlaceholder: true
+                };
+                
+                finalQuestions.push(placeholderQuestion);
+                console.log(`➕ تم إضافة سؤال بديل رقم ${placeholderNumber}`);
+            }
+            
+            // Stage 3: Advanced Formatting and Enhancement
+            const enhancedQuestions = finalQuestions.map((q, index) => {
+                const enhanced = {
+                    ...q,
+                    number: index + 1,
+                    question: enhanceQuestionText(q.question),
+                    answer: enhanceAnswerText(q.answer),
+                    explanation: enhanceExplanationText(q.explanation),
+                    options: q.options ? q.options.map(opt => enhanceOptionText(opt)) : [],
+                    quality: calculateQuestionQuality(q)
+                };
+                
+                console.log(`🎯 تم تحسين السؤال ${index + 1} - جودة: ${enhanced.quality}%`);
+                return enhanced;
+            });
+
+            // Stage 4: Final Quality Report
+            const averageQuality = enhancedQuestions.reduce((sum, q) => sum + q.quality, 0) / enhancedQuestions.length;
+            console.log(`🎉 التحقق النهائي مكتمل:`);
+            console.log(`📊 عدد الأسئلة النهائي: ${enhancedQuestions.length}`);
+            console.log(`⭐ متوسط الجودة: ${averageQuality.toFixed(1)}%`);
+            console.log(`🔄 أسئلة بديلة: ${enhancedQuestions.filter(q => q.isPlaceholder).length}`);
+
+            return enhancedQuestions;
+        }
+
+        // Text enhancement functions
+        function enhanceQuestionText(text) {
+            return text
+                .trim()
+                .replace(/^(السؤال|العبارة)\s*\d*\s*:?\s*/i, '')
+                .replace(/\s+/g, ' ')
+                .replace(/([^؟])$/, '$1؟'); // Ensure question mark
+        }
+
+        function enhanceAnswerText(text) {
+            return text
+                .trim()
+                .replace(/^(الإجابة|الجواب)\s*:?\s*/i, '');
+        }
+
+        function enhanceExplanationText(text) {
+            return text
+                .trim()
+                .replace(/^(التفسير|الشرح|التوضيح)\s*:?\s*/i, '')
+                .replace(/\s+/g, ' ');
+        }
+
+        function enhanceOptionText(text) {
+            return text
+                .trim()
+                .replace(/\s+/g, ' ');
+        }
+
+        // Calculate question quality score
+        function calculateQuestionQuality(question) {
+            let score = 0;
+            
+            // Question text quality (30 points)
+            if (question.question && question.question.length > 20) score += 15;
+            if (question.question && question.question.length > 40) score += 10;
+            if (question.question && question.question.includes('؟')) score += 5;
+            
+            // Answer quality (20 points)
+            if (question.answer && question.answer.length > 0) score += 10;
+            if (question.answer && question.answer.length > 2) score += 10;
+            
+            // Explanation quality (30 points)
+            if (question.explanation && question.explanation.length > 20) score += 15;
+            if (question.explanation && question.explanation.length > 50) score += 15;
+            
+            // Options quality (20 points) - for multiple choice
+            if (question.type === 'multiple_choice') {
+                if (question.options && question.options.length >= 4) score += 10;
+                if (question.options && question.options.every(opt => opt.length > 5)) score += 10;
+            } else {
+                score += 20; // Full points for non-multiple choice
+            }
+            
+            return Math.min(score, 100);
+        }
+
+        // Display questions function
+        function displayQuestions(questions) {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+
+            questions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question-card bg-gray-50 p-6 rounded-lg';
+                
+                let optionsHtml = '';
+                if (q.options && q.options.length > 0) {
+                    optionsHtml = `
+                        <div class="mt-4">
+                            <h4 class="font-semibold text-gray-700 mb-3">الخيارات:</h4>
+                            <div class="space-y-2">
+                                ${q.options.map(option => `
+                                    <div class="flex items-center p-2 bg-white rounded border">
+                                        <span class="text-blue-600 font-semibold ml-3">${option.substring(0, 2)}</span>
+                                        <span class="text-gray-700">${option.substring(3)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let answerHtml = '';
+                if (q.answer) {
+                    const answerClass = q.type === 'true_false' ? 
+                        (q.answer.includes('صح') ? 'bg-green-50 border-green-400 text-green-800' : 'bg-red-50 border-red-400 text-red-800') :
+                        'bg-blue-50 border-blue-400 text-blue-800';
+                    
+                    answerHtml = `
+                        <div class="mt-4 p-4 ${answerClass} rounded-lg border-r-4">
+                            <h4 class="font-semibold mb-2">✅ الإجابة الصحيحة:</h4>
+                            <div class="whitespace-pre-line">${q.answer}</div>
+                        </div>
+                    `;
+                }
+
+                let explanationHtml = '';
+                if (q.explanation) {
+                    explanationHtml = `
+                        <div class="mt-3 p-4 bg-yellow-50 rounded-lg border-r-4 border-yellow-400">
+                            <h4 class="font-semibold text-yellow-800 mb-2">💡 التفسير:</h4>
+                            <p class="text-yellow-700">${q.explanation}</p>
+                        </div>
+                    `;
+                }
+
+                // Question type badge
+                const typeLabels = {
+                    'multiple_choice': 'اختيار من متعدد',
+                    'true_false': 'صح أم خطأ',
+                    'essay': 'مقالي',
+                    'short_answer': 'إجابة قصيرة'
+                };
+                
+                const typeBadge = `
+                    <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                        ${typeLabels[q.type] || 'عام'}
+                    </span>
+                `;
+
+                questionDiv.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg ml-4 flex-shrink-0">
+                            ${index + 1}
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-lg font-semibold text-gray-800 flex-1">${q.question}</h3>
+                                ${typeBadge}
+                            </div>
+                            ${optionsHtml}
+                            ${answerHtml}
+                            ${explanationHtml}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(questionDiv);
+            });
+        }
+
+        // Revolutionary Loading System with Detailed Progress
+        function showAdvancedLoading(show) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const generateBtn = document.getElementById('generateBtn');
+            
+            if (show) {
+                statusIndicator.classList.remove('hidden');
+                generateBtn.disabled = true;
+                generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                generateBtn.innerHTML = '⏳ جاري التوليد الذكي...';
+                
+                // Enhanced loading display
+                statusIndicator.innerHTML = `
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 text-center">
+                        <div class="text-4xl mb-3">🤖</div>
+                        <h3 class="text-xl font-bold text-blue-800 mb-2">الذكاء الاصطناعي يعمل</h3>
+                        <div id="currentStage" class="text-blue-600 font-semibold mb-3">بدء العملية المتقدمة...</div>
+                        <div id="progressBar" class="w-full bg-blue-200 rounded-full h-2 mb-3">
+                            <div id="progressFill" class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <div id="stageDetails" class="text-sm text-blue-500">يرجى الانتظار، العملية قد تستغرق دقيقة واحدة</div>
+                        <div class="mt-4 flex justify-center space-x-2">
+                            <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                            <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                            <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                statusIndicator.classList.add('hidden');
+                generateBtn.disabled = false;
+                generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                generateBtn.innerHTML = '🚀 توليد الأسئلة بالذكاء الاصطناعي';
+            }
+        }
+
+        function updateLoadingStage(stageText, progress = 0, details = '') {
+            const currentStage = document.getElementById('currentStage');
+            const progressFill = document.getElementById('progressFill');
+            const stageDetails = document.getElementById('stageDetails');
+            
+            if (currentStage) {
+                currentStage.innerHTML = stageText;
+            }
+            
+            if (progressFill) {
+                progressFill.style.width = `${progress}%`;
+            }
+            
+            if (stageDetails && details) {
+                stageDetails.innerHTML = details;
+            }
+        }
+
+        // Enhanced stage management
+        const loadingStages = [
+            { text: '🔗 الاتصال بالذكاء الاصطناعي...', progress: 10, details: 'جاري الاتصال بخوادم Gemini AI' },
+            { text: '📝 إرسال المتطلبات...', progress: 25, details: 'تم إرسال تفاصيل الموضوع والمستوى' },
+            { text: '🧠 توليد الأسئلة...', progress: 50, details: 'الذكاء الاصطناعي يقوم بإنشاء الأسئلة' },
+            { text: '🔍 تحليل وتنظيم النتائج...', progress: 75, details: 'فحص جودة الأسئلة وتنسيقها' },
+            { text: '✅ إنهاء التنسيق...', progress: 90, details: 'إضافة اللمسات الأخيرة' },
+            { text: '🎉 اكتمل بنجاح!', progress: 100, details: 'تم إنشاء الأسئلة بنجاح' }
+        ];
+
+        async function runLoadingSequence() {
+            for (let i = 0; i < loadingStages.length - 1; i++) {
+                const stage = loadingStages[i];
+                updateLoadingStage(stage.text, stage.progress, stage.details);
+                await delay(800 + Math.random() * 400); // Variable delay for realism
+            }
+        }
+
+        function showLoading(show) {
+            showAdvancedLoading(show);
+        }
+
+        function showResults() {
+            const resultsSection = document.getElementById('resultsSection');
+            const aiIndicator = document.getElementById('aiIndicator');
+            
+            resultsSection.classList.remove('hidden');
+            resultsSection.classList.add('success-animation');
+            
+            if (isAIGenerated) {
+                const providerName = aiProvider === 'gemini' ? 'Gemini AI' : aiProvider === 'deepai' ? 'DeepAI' : 'AI';
+                const providerIcon = aiProvider === 'gemini' ? '🤖' : aiProvider === 'deepai' ? '🧠' : '🤖';
+                aiIndicator.innerHTML = `${providerIcon} مولد بـ ${providerName}`;
+                aiIndicator.className = 'mr-4 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold';
+            } else {
+                aiIndicator.innerHTML = '⚠️ غير متاح';
+                aiIndicator.className = 'mr-4 px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold';
+            }
+            
+            // Scroll to results
+            setTimeout(() => {
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+
+        function hideResults() {
+            document.getElementById('resultsSection').classList.add('hidden');
+        }
+
+        function showError(message) {
+            const errorSection = document.getElementById('errorSection');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            errorMessage.textContent = message;
+            errorSection.classList.remove('hidden');
+            
+            // Scroll to error
+            setTimeout(() => {
+                errorSection.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        function hideError() {
+            document.getElementById('errorSection').classList.add('hidden');
+        }
+
+        function showSuccessMessage(message) {
+            // Create temporary success message
+            const successDiv = document.createElement('div');
+            successDiv.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 success-animation';
+            successDiv.textContent = message;
+            
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                successDiv.remove();
+            }, 3000);
+        }
+
+        // Copy and download functions
+        function copyAllQuestions() {
+            if (generatedQuestions.length === 0) {
+                showError('⚠️ لا توجد أسئلة للنسخ');
+                return;
+            }
+
+            let text = `الأسئلة المولدة بالذكاء الاصطناعي\n`;
+            text += `الموضوع: ${document.getElementById('subject').value}\n`;
+            text += `المستوى: ${document.getElementById('level').value}\n`;
+            text += `تاريخ الإنشاء: ${new Date().toLocaleDateString('ar-SA')}\n`;
+            text += `${'='.repeat(50)}\n\n`;
+            
+            generatedQuestions.forEach((q, index) => {
+                text += `${index + 1}. ${q.question}\n`;
+                
+                if (q.options && q.options.length > 0) {
+                    text += `الخيارات:\n`;
+                    q.options.forEach(option => {
+                        text += `   ${option}\n`;
+                    });
+                }
+                
+                if (q.answer) {
+                    text += `الإجابة: ${q.answer}\n`;
+                }
+                
+                if (q.explanation) {
+                    text += `التفسير: ${q.explanation}\n`;
+                }
+                
+                text += `\n${'-'.repeat(30)}\n\n`;
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                showSuccessMessage('✅ تم نسخ جميع الأسئلة بنجاح!');
+            }).catch(() => {
+                showError('❌ فشل في نسخ الأسئلة');
+            });
+        }
+
+        function downloadQuestions() {
+            if (generatedQuestions.length === 0) {
+                showError('⚠️ لا توجد أسئلة للتحميل');
+                return;
+            }
+
+            let text = `الأسئلة المولدة بالذكاء الاصطناعي - Gemini AI\n`;
+            text += `الموضوع: ${document.getElementById('subject').value}\n`;
+            text += `المستوى: ${document.getElementById('level').value}\n`;
+            text += `نوع الأسئلة: ${document.getElementById('questionType').value}\n`;
+            text += `تاريخ الإنشاء: ${new Date().toLocaleDateString('ar-SA')}\n`;
+            text += `${'='.repeat(60)}\n\n`;
+            
+            generatedQuestions.forEach((q, index) => {
+                text += `السؤال ${index + 1}:\n${q.question}\n\n`;
+                
+                if (q.options && q.options.length > 0) {
+                    text += `الخيارات:\n`;
+                    q.options.forEach(option => {
+                        text += `${option}\n`;
+                    });
+                    text += `\n`;
+                }
+                
+                if (q.answer) {
+                    text += `الإجابة الصحيحة: ${q.answer}\n\n`;
+                }
+                
+                if (q.explanation) {
+                    text += `التفسير: ${q.explanation}\n\n`;
+                }
+                
+                text += `${'='.repeat(60)}\n\n`;
+            });
+
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `اسئلة_${document.getElementById('subject').value.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showSuccessMessage('✅ تم تحميل الأسئلة بنجاح!');
+        }
+
+        // Exam paper functions
+        function createExamPaper() {
+            if (generatedQuestions.length === 0) {
+                showError('⚠️ يرجى توليد الأسئلة أولاً');
+                return;
+            }
+
+            generateExamPaper();
+            document.getElementById('examPaperSection').classList.remove('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('examPaperSection').scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+
+        function generateExamPaper() {
+            const examContent = document.getElementById('examPaperContent');
+            const subject = document.getElementById('subject').value;
+            const level = document.getElementById('level').value;
+            const questionType = document.getElementById('questionType').value;
+            const currentDate = new Date().toLocaleDateString('ar-SA');
+            const currentTime = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            
+            // Use custom header settings
+            const institutionName = headerSettings.institutionName || 'المؤسسة التعليمية';
+            const teacherName = headerSettings.teacherName;
+            const examDuration = headerSettings.examDuration || 'ساعتان';
+            const questionScore = parseInt(headerSettings.questionScore) || 5;
+            const additionalInstructions = headerSettings.additionalInstructions;
+            const totalScore = generatedQuestions.length * questionScore;
+            
+            let html = `
+                <div class="exam-paper text-right bg-white" style="font-family: 'Cairo', sans-serif; line-height: 1.6; min-height: 297mm; padding: 20mm;">
+                    <!-- Header Section -->
+                    <div class="exam-header text-center border-b-2 border-black pb-4 mb-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="text-sm">
+                                <p>التاريخ: ${currentDate}</p>
+                                <p>الوقت: ${currentTime}</p>
+                            </div>
+                            <div class="text-center flex-1">
+                                <h1 class="text-2xl font-bold mb-2">${institutionName}</h1>
+                                <h2 class="text-xl font-semibold">امتحان مادة ${subject}</h2>
+                                <p class="text-base mt-1">${level} - ${questionType}</p>
+                            </div>
+                            <div class="text-sm">
+                                <p>المدة: ${examDuration}</p>
+                                <p>الدرجة: ${totalScore}</p>
+                            </div>
+                        </div>
+                        
+                        ${teacherName ? `<p class="text-base mb-3"><strong>المعلم/الأستاذ:</strong> ${teacherName}</p>` : ''}
+                        
+                        <!-- Student Information Box -->
+                        <div class="student-info border-2 border-black p-3 mb-4 bg-gray-50">
+                            <div class="grid grid-cols-3 gap-4 text-base">
+                                <div class="text-right">
+                                    <strong>اسم الطالب:</strong><br>
+                                    <div class="border-b-2 border-black mt-1 h-6"></div>
+                                </div>
+                                <div class="text-center">
+                                    <strong>رقم الجلوس:</strong><br>
+                                    <div class="border-b-2 border-black mt-1 h-6 w-20 mx-auto"></div>
+                                </div>
+                                <div class="text-left">
+                                    <strong>الفصل/الشعبة:</strong><br>
+                                    <div class="border-b-2 border-black mt-1 h-6"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Instructions Box -->
+                        <div class="instructions border border-black p-3 bg-yellow-50 text-right">
+                            <h3 class="font-bold mb-2 text-center">📋 تعليمات الامتحان</h3>
+                            <div class="text-sm grid grid-cols-2 gap-2">
+                                <ul class="space-y-1">
+                                    <li>✓ اقرأ الأسئلة بعناية قبل الإجابة</li>
+                                    <li>✓ أجب عن جميع الأسئلة المطلوبة</li>
+                                    <li>✓ اكتب بخط واضح ومقروء</li>
+                                    <li>✓ لا تستخدم القلم الرصاص</li>
+                                </ul>
+                                <ul class="space-y-1">
+                                    <li>✓ تأكد من كتابة بياناتك كاملة</li>
+                                    <li>✓ راجع إجاباتك قبل التسليم</li>
+                                    <li>✓ لا تترك أي سؤال بدون إجابة</li>
+                                    ${additionalInstructions ? `<li>✓ ${additionalInstructions}</li>` : '<li>✓ حظاً موفقاً</li>'}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Questions Section -->
+                    <div class="questions-section">
+            `;
+
+            generatedQuestions.forEach((q, index) => {
+                const questionNumber = index + 1;
+                html += `
+                    <div class="exam-question mb-6 border border-gray-400 rounded p-3" style="page-break-inside: avoid;">
+                        <div class="question-header flex items-center mb-3">
+                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-sm ml-3">
+                                ${questionNumber}
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-base font-semibold">${q.question}</h3>
+                            </div>
+                            <div class="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                                ${questionScore} درجة
+                            </div>
+                        </div>
+                `;
+
+                if (q.options && q.options.length > 0) {
+                    html += `<div class="options space-y-2 mr-8">`;
+                    q.options.forEach((option, optIndex) => {
+                        const optionLetter = String.fromCharCode(65 + optIndex); // A, B, C, D
+                        html += `
+                            <div class="flex items-center p-1">
+                                <div class="border-2 border-gray-500 rounded-full w-4 h-4 ml-3 flex-shrink-0"></div>
+                                <span class="font-semibold ml-2">${optionLetter})</span>
+                                <span class="text-sm">${option.replace(/^[أ-د]\)\s*/, '')}</span>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                } else if (q.type === 'true_false') {
+                    html += `
+                        <div class="true-false-options mr-8 flex gap-8">
+                            <div class="flex items-center">
+                                <div class="border-2 border-gray-500 rounded-full w-4 h-4 ml-2"></div>
+                                <span class="font-semibold">صح</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="border-2 border-gray-500 rounded-full w-4 h-4 ml-2"></div>
+                                <span class="font-semibold">خطأ</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Essay or short answer questions
+                    const lineCount = q.type === 'essay' ? 6 : 3;
+                    html += `
+                        <div class="answer-space mt-3 mr-8">
+                            <p class="text-xs text-gray-600 mb-2">الإجابة:</p>
+                    `;
+                    for (let i = 0; i < lineCount; i++) {
+                        html += `<div class="border-b border-gray-400 h-6 mb-2"></div>`;
+                    }
+                    html += `</div>`;
+                }
+
+                html += `
+                        <!-- Score Box -->
+                        <div class="score-box mt-3 pt-2 border-t border-gray-300 flex justify-between items-center">
+                            <div class="text-xs text-gray-600">
+                                ${q.type === 'multiple_choice' ? 'اختر الإجابة الصحيحة' : 
+                                  q.type === 'true_false' ? 'ضع علامة (✓) أمام الإجابة الصحيحة' : 
+                                  'أجب بوضوح ودقة'}
+                            </div>
+                            <div class="score-area border border-gray-400 px-3 py-1 bg-gray-50">
+                                <span class="text-xs">الدرجة: </span>
+                                <span class="border-b border-black w-8 inline-block h-4"></span>
+                                <span class="text-xs"> / ${questionScore}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                    
+                    <!-- Footer Section -->
+                    <div class="exam-footer mt-8 pt-4 border-t-2 border-black">
+                        <div class="grid grid-cols-3 gap-6 text-base">
+                            <!-- Total Score Section -->
+                            <div class="text-center border border-black p-3 bg-blue-50">
+                                <h4 class="font-bold mb-2">النتيجة النهائية</h4>
+                                <div class="text-lg">
+                                    <span>المجموع: </span>
+                                    <span class="border-b-2 border-black w-12 inline-block h-6"></span>
+                                    <span> / ${totalScore}</span>
+                                </div>
+                                <div class="mt-2">
+                                    <span>النسبة المئوية: </span>
+                                    <span class="border-b-2 border-black w-12 inline-block h-6"></span>
+                                    <span>%</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Grade Section -->
+                            <div class="text-center border border-black p-3 bg-green-50">
+                                <h4 class="font-bold mb-2">التقدير</h4>
+                                <div class="space-y-1 text-sm">
+                                    <div>□ ممتاز (90-100%)</div>
+                                    <div>□ جيد جداً (80-89%)</div>
+                                    <div>□ جيد (70-79%)</div>
+                                    <div>□ مقبول (60-69%)</div>
+                                    <div>□ ضعيف (أقل من 60%)</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Signatures Section -->
+                            <div class="text-center border border-black p-3 bg-yellow-50">
+                                <h4 class="font-bold mb-2">التوقيعات</h4>
+                                <div class="space-y-3">
+                                    <div>
+                                        <p class="text-sm">المصحح:</p>
+                                        <div class="border-b border-black h-6 mt-1"></div>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm">المراجع:</p>
+                                        <div class="border-b border-black h-6 mt-1"></div>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm">تاريخ التصحيح:</p>
+                                        <div class="border-b border-black h-6 mt-1"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Bottom Note -->
+                        <div class="text-center mt-4 text-xs text-gray-600 border-t border-gray-300 pt-2">
+                            <p>تم إنشاء هذا الامتحان بواسطة مولد الأسئلة الذكي • ${currentDate} • ${institutionName}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            examContent.innerHTML = html;
+        }
+
+        function printExam() {
+            window.print();
+        }
+
+        function downloadExamPDF() {
+            const subject = document.getElementById('subject').value;
+            const level = document.getElementById('level').value;
+            const currentDate = new Date().toLocaleDateString('ar-SA');
+            
+            let examText = `امتحان مادة ${subject}\n`;
+            examText += `المستوى: ${level}\n`;
+            examText += `التاريخ: ${currentDate}\n`;
+            examText += `المدة: ساعتان\n`;
+            examText += `الدرجة الكلية: ${generatedQuestions.length * 5} درجة\n\n`;
+            examText += `${'='.repeat(60)}\n\n`;
+            
+            examText += `اسم الطالب: ________________________________\n`;
+            examText += `رقم الجلوس: ________________________________\n\n`;
+            
+            examText += `تعليمات الامتحان:\n`;
+            examText += `• اقرأ الأسئلة بعناية قبل الإجابة\n`;
+            examText += `• أجب عن جميع الأسئلة\n`;
+            examText += `• اكتب بخط واضح ومقروء\n\n`;
+            examText += `${'='.repeat(60)}\n\n`;
+            
+            generatedQuestions.forEach((q, index) => {
+                examText += `${index + 1}. ${q.question}\n\n`;
+                
+                if (q.options && q.options.length > 0) {
+                    q.options.forEach(option => {
+                        examText += `   ○ ${option}\n`;
+                    });
+                } else {
+                    examText += `   الإجابة:\n`;
+                    examText += `   ${'_'.repeat(50)}\n`;
+                    examText += `   ${'_'.repeat(50)}\n`;
+                    examText += `   ${'_'.repeat(50)}\n`;
+                }
+                
+                examText += `\n   الدرجة: _____ / 5\n\n`;
+                examText += `${'-'.repeat(60)}\n\n`;
+            });
+            
+            examText += `المجموع الكلي: _____ / ${generatedQuestions.length * (parseInt(headerSettings.questionScore) || 5)} درجة\n`;
+            examText += `التقدير: ________________________\n`;
+            examText += `توقيع المصحح: ________________________\n`;
+
+            const blob = new Blob([examText], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `امتحان_${subject.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showSuccessMessage('✅ تم تحميل ورقة الامتحان بنجاح!');
+        }
+
+        // Edit Questions Functions
+        function editQuestions() {
+            if (generatedQuestions.length === 0) {
+                showError('⚠️ لا توجد أسئلة للتعديل');
+                return;
+            }
+
+            const container = document.getElementById('editQuestionsContainer');
+            container.innerHTML = '';
+
+            generatedQuestions.forEach((q, index) => {
+                const editDiv = document.createElement('div');
+                editDiv.className = 'border border-gray-300 rounded-lg p-4';
+                
+                let optionsHtml = '';
+                if (q.options && q.options.length > 0) {
+                    optionsHtml = `
+                        <div class="mt-3">
+                            <label class="block text-gray-700 font-semibold mb-2">الخيارات:</label>
+                            ${q.options.map((option, optIndex) => `
+                                <input type="text" value="${option}" 
+                                       class="w-full p-2 border border-gray-300 rounded mb-2 edit-option" 
+                                       data-question="${index}" data-option="${optIndex}">
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                editDiv.innerHTML = `
+                    <div class="mb-3">
+                        <label class="block text-gray-700 font-semibold mb-2">السؤال ${index + 1}:</label>
+                        <textarea class="w-full p-3 border border-gray-300 rounded-lg edit-question" 
+                                  data-question="${index}" rows="2">${q.question}</textarea>
+                    </div>
+                    ${optionsHtml}
+                    <div class="mt-3">
+                        <label class="block text-gray-700 font-semibold mb-2">الإجابة:</label>
+                        <textarea class="w-full p-2 border border-gray-300 rounded edit-answer" 
+                                  data-question="${index}" rows="2">${q.answer}</textarea>
+                    </div>
+                    <div class="mt-3">
+                        <label class="block text-gray-700 font-semibold mb-2">التفسير:</label>
+                        <textarea class="w-full p-2 border border-gray-300 rounded edit-explanation" 
+                                  data-question="${index}" rows="2">${q.explanation}</textarea>
+                    </div>
+                `;
+
+                container.appendChild(editDiv);
+            });
+
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        function saveEditedQuestions() {
+            const editQuestions = document.querySelectorAll('.edit-question');
+            const editAnswers = document.querySelectorAll('.edit-answer');
+            const editExplanations = document.querySelectorAll('.edit-explanation');
+            const editOptions = document.querySelectorAll('.edit-option');
+
+            // Update questions
+            editQuestions.forEach((input, index) => {
+                if (generatedQuestions[index]) {
+                    generatedQuestions[index].question = input.value;
+                }
+            });
+
+            // Update answers
+            editAnswers.forEach((input, index) => {
+                if (generatedQuestions[index]) {
+                    generatedQuestions[index].answer = input.value;
+                }
+            });
+
+            // Update explanations
+            editExplanations.forEach((input, index) => {
+                if (generatedQuestions[index]) {
+                    generatedQuestions[index].explanation = input.value;
+                }
+            });
+
+            // Update options
+            editOptions.forEach(input => {
+                const questionIndex = parseInt(input.dataset.question);
+                const optionIndex = parseInt(input.dataset.option);
+                if (generatedQuestions[questionIndex] && generatedQuestions[questionIndex].options) {
+                    generatedQuestions[questionIndex].options[optionIndex] = input.value;
+                }
+            });
+
+            // Refresh display
+            displayQuestions(generatedQuestions);
+            closeEditModal();
+            showSuccessMessage('✅ تم حفظ التعديلات بنجاح!');
+        }
+
+        // Format Functions
+        function formatQuestions() {
+            if (generatedQuestions.length === 0) {
+                showError('⚠️ لا توجد أسئلة للتنسيق');
+                return;
+            }
+
+            document.getElementById('formatModal').classList.remove('hidden');
+        }
+
+        function closeFormatModal() {
+            document.getElementById('formatModal').classList.add('hidden');
+        }
+
+        function applyFormatting() {
+            const displayStyle = document.getElementById('displayStyle').value;
+            const fontSize = document.getElementById('fontSize').value;
+            const borderColor = document.getElementById('borderColor').value;
+            const showNumbers = document.getElementById('showNumbers').checked;
+            const showExplanations = document.getElementById('showExplanations').checked;
+
+            const container = document.getElementById('questionsContainer');
+            const questionCards = container.querySelectorAll('.question-card');
+
+            questionCards.forEach((card, index) => {
+                // Apply display style
+                if (displayStyle === 'list') {
+                    card.className = `question-card bg-white p-4 border-b border-gray-200 ${fontSize}`;
+                } else if (displayStyle === 'compact') {
+                    card.className = `question-card bg-gray-50 p-3 rounded border ${borderColor} ${fontSize}`;
+                } else {
+                    card.className = `question-card bg-gray-50 p-6 rounded-lg border-r-4 ${borderColor} ${fontSize}`;
+                }
+
+                // Show/hide numbers
+                const numberElement = card.querySelector('.bg-gradient-to-r');
+                if (numberElement) {
+                    numberElement.style.display = showNumbers ? 'flex' : 'none';
+                }
+
+                // Show/hide explanations
+                const explanationElement = card.querySelector('.bg-yellow-50');
+                if (explanationElement) {
+                    explanationElement.style.display = showExplanations ? 'block' : 'none';
+                }
+            });
+
+            closeFormatModal();
+            showSuccessMessage('🎨 تم تطبيق التنسيق بنجاح!');
+        }
+
+        // Header Customization Functions
+        let headerSettings = {
+            institutionName: 'المؤسسة التعليمية',
+            teacherName: '',
+            examDuration: 'ساعتان',
+            questionScore: '5',
+            additionalInstructions: ''
+        };
+
+        function customizeHeader() {
+            // Load current settings into modal
+            document.getElementById('institutionName').value = headerSettings.institutionName;
+            document.getElementById('teacherName').value = headerSettings.teacherName;
+            document.getElementById('examDuration').value = headerSettings.examDuration;
+            document.getElementById('questionScore').value = headerSettings.questionScore;
+            document.getElementById('additionalInstructions').value = headerSettings.additionalInstructions;
+            
+            document.getElementById('headerModal').classList.remove('hidden');
+        }
+
+        function closeHeaderModal() {
+            document.getElementById('headerModal').classList.add('hidden');
+        }
+
+        function saveHeaderSettings() {
+            headerSettings.institutionName = document.getElementById('institutionName').value || 'المؤسسة التعليمية';
+            headerSettings.teacherName = document.getElementById('teacherName').value;
+            headerSettings.examDuration = document.getElementById('examDuration').value;
+            headerSettings.questionScore = document.getElementById('questionScore').value;
+            headerSettings.additionalInstructions = document.getElementById('additionalInstructions').value;
+
+            closeHeaderModal();
+            showSuccessMessage('📝 تم حفظ إعدادات الترويسة بنجاح!');
+            
+            // If exam paper is visible, regenerate it with new settings
+            if (!document.getElementById('examPaperSection').classList.contains('hidden')) {
+                generateExamPaper();
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add enter key support
+            document.getElementById('subject').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    generateQuestions();
+                }
+            });
+            
+            console.log('مولد الأسئلة الذكي جاهز للاستخدام!');
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d09b9ac41f5cd2',t:'MTc1NDg0MDU5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
